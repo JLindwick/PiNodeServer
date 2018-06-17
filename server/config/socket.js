@@ -1,19 +1,35 @@
 var io = require('socket.io')();
 const colors = require('colors');
 const ResponseModel = require('../models/response.js');
-
-var savedInputs = ["this will be the first entry", "this wil be the second entry", "this will be the third entry", "Justin got this feature working", "Justin made this function work. Thank him sometime."];
-
+// Quick commands is an array of objects, each with a default response and a custom response
+let QuickCommands = [
+  {
+    defaultText: "Welcome to class!",
+    customText: "Welcome to class 1!"
+  },
+  {
+    defaultText: "Welcome to class!",
+    customText: "Welcome to class 1! I hope you're feeling 2"
+  },
+  {
+    defaultText: "Do your homework!",
+    customText: "Do your homework 1!"
+  },
+  {
+    defaultText: "Do your homework!",
+    customText: "Do your homework 1! Make sure you do too 2!"
+  },
+  {
+    defaultText: "rawwr",
+    customText: "rawwr 1"
+  }
+];
 io.on('connection', function(socket) {
-
-  // io.emit('chat message', "Use the number's to enter prerecorded text")
-  // for (var i = 0; i < savedInputs.length; i++) {
-  //   io.emit('chat message', (i + 1) + " " + savedInputs[i])
-  // }
 
   console.log(socket.conn.id);
   socket.on('chat message', function(data) {
     console.log("MESSAGE:" + data + " FROM:" ["red"] + socket.conn.id);
+    io.to('pi-client').emit('chat message',"use -h to display help commands")
     io.to('customAlexaResponsePage').emit('chat message', data) //relay chat message back to all in chat room
     let readCount = 0
     if (data === "stop") {
@@ -32,34 +48,21 @@ io.on('connection', function(socket) {
     socket.emit("message", "Successfully connected to chatroom.")
   });
 
-  // Quick commands is an array of objects, each with a default response and a custom response
-  let QuickCommands = [
-    {
-      defaultText: "Welcome to class!",
-      customText: "Welcome to class 1!"
-    },
-    {
-      defaultText: "Welcome to class!",
-      customText: "Welcome to class 1! I hope you're feeling 2"
-    },
-    {
-      defaultText: "Do your homework!",
-      customText: "Do your homework 1!"
-    },
-    {
-      defaultText: "Do your homework!",
-      customText: "Do your homework 1! Make sure you do too 2!"
-    },
-    {
-      defaultText: "rawwr",
-      customText: "rawwr 1"
-    }
-  ];
-
   socket.on("pi room chat message", function(msg) {
     console.log("pi room chat message sent");
     let text_response;
-    console.log(msg.charAt(1));
+    if(isHelp(msg)) {
+      io.to("pi-client").emit("pi room chat message", "[Replace 1 or 2 with the arugment you wish to use for the custom text!]" );
+      io.to("pi-client").emit("pi room chat message", "----------------------------------------------------------------------------------");
+
+      for (var i = 0;i<QuickCommands.length;i++)
+      {
+        io.to("pi-client").emit("pi room chat message", "Default Text: " + QuickCommands[i].defaultText);
+        io.to("pi-client").emit("pi room chat message", "Custom Text: " + QuickCommands[i].customText);
+        io.to("pi-client").emit("pi room chat message", "----------------------------------------------------------------------------------");
+
+      }
+    } else {
     if (isQuickCommand(msg)) {
       const quickCommandIndex = parseInt(msg.charAt(1)) - 1;
       const quickCommandArguments = getArgumentsFromMessage(msg);
@@ -71,7 +74,7 @@ io.on('connection', function(socket) {
           text_response = text_response.replace(regex, quickCommandArguments[i - 1]);
         }
       } else {
-        text_response = QuickCommands[quickCommandIndex].defaultText;
+          text_response = QuickCommands[quickCommandIndex].defaultText;
       }
       io.to("pi-client").emit("pi room chat message", text_response)
       io.to("pi-client").emit("robot speak command", text_response)
@@ -79,10 +82,18 @@ io.on('connection', function(socket) {
       io.to("pi-client").emit("pi room chat message", msg)
       io.to("pi-client").emit("robot speak command", msg)
     }
+    }
+
     // HELPER FUNCTIONS ##########
     function isQuickCommand(message) {
       // Quick commands need to have a "-" character and they need to exist in the QuickCommands array
       return message.startsWith("-") && (QuickCommands[message.charAt(1)] - 1 != undefined);
+    }
+
+
+
+    function isHelp(message) {
+      return message.startsWith("-") && message.charAt(1) == "h";
     }
 
     function getArgumentsFromMessage(message) {
