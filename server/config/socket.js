@@ -81,7 +81,6 @@ io.on('connection', function(socket) {
     }
     // HELPER FUNCTIONS ##########
     function isQuickCommand(message) {
-      var length = QuickCommands.length
       // Quick commands need to have a "-" character and they need to exist in the QuickCommands array
       return message.startsWith("-") && (QuickCommands[message.charAt(1)] - 1 != undefined);
     }
