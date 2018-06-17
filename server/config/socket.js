@@ -5,23 +5,21 @@ const ResponseModel = require('../models/response.js');
 let QuickCommands = [
   {
     defaultText: "Welcome to class!",
-    customText: "Welcome to class 1!"
-  },
-  {
-    defaultText: "Welcome to class!",
-    customText: "Welcome to class 1! I hope you're feeling 2"
-  },
-  {
-    defaultText: "Do your homework!",
-    customText: "Do your homework 1!"
+    customTextArg1: "Welcome to class 1!",
+    customTextArg2: "Welcome to class 1 2 ",
+    customTextArg3: "Welcome to class 1 2 3",
+    CustomTextArg4: "Welcome to class 1 2 3 4",
+    CustomTextArg5: "Welcome to class 1 2 3 4 5"
   },
   {
     defaultText: "Do your homework!",
-    customText: "Do your homework 1! Make sure you do too 2!"
+    customTextArg1: "Do your homework 1!",
+    CustomTextArg2: "Do your homework1 and you too 2"
   },
   {
     defaultText: "rawwr",
-    customText: "rawwr 1"
+    customTextArg1: "rawwr 1",
+    customTextArg2: "rawwr 1 2"
   }
 ];
 io.on('connection', function(socket) {
@@ -50,7 +48,7 @@ io.on('connection', function(socket) {
 
   socket.on("pi room chat message", function(msg) {
     console.log("pi room chat message sent");
-    let text_response;
+    var text_response = "";
     if(isHelp(msg)) {
       io.to("pi-client").emit("pi room chat message", "[Replace 1 or 2 with the arugment you wish to use for the custom text!]" );
       io.to("pi-client").emit("pi room chat message", "----------------------------------------------------------------------------------");
@@ -66,10 +64,19 @@ io.on('connection', function(socket) {
     if (isQuickCommand(msg)) {
       const quickCommandIndex = parseInt(msg.charAt(1)) - 1;
       const quickCommandArguments = getArgumentsFromMessage(msg);
+      const howManyArgs = quickCommandArguments.length;
+
+      var ctext = "customTextArg";
       if (quickCommandArguments.length > 0) {
-        text_response = QuickCommands[quickCommandIndex].customText;
+          if(quickCommandArguments.length <= Object.keys(QuickCommands).length)
+          {
+          text_response = Object.values((QuickCommands)[quickCommandIndex])[howManyArgs];
+          console.log(text_response);
+          } else {
+        text_response = QuickCommands[quickCommandIndex].defaultText;
+      }
         console.log(text_response);
-        for (var i = 1; i <= quickCommandArguments.length; i++) {
+        for (var i = 1; i <= howManyArgs; i++) {
           const regex = new RegExp(`${i}`, "g");
           text_response = text_response.replace(regex, quickCommandArguments[i - 1]);
         }
@@ -89,8 +96,6 @@ io.on('connection', function(socket) {
       // Quick commands need to have a "-" character and they need to exist in the QuickCommands array
       return message.startsWith("-") && (QuickCommands[message.charAt(1)] - 1 != undefined);
     }
-
-
 
     function isHelp(message) {
       return message.startsWith("-") && message.charAt(1) == "h";
