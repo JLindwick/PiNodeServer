@@ -36,13 +36,30 @@ io.on('connection', function(socket) {
   let QuickCommands = [
     {
       defaultText: "Welcome to class!",
+      customText: "Welcome to class 1!"
+    },
+    {
+      defaultText: "Welcome to class!",
       customText: "Welcome to class 1! I hope you're feeling 2"
-    }, {}, {}
+    },
+    {
+      defaultText: "Do your homework!",
+      customText: "Do your homework 1!"
+    },
+    {
+      defaultText: "Do your homework!",
+      customText: "Do your homework 1! Make sure you do too 2!"
+    },
+    {
+      defaultText: "rawwr",
+      customText: "rawwr 1"
+    }
   ];
 
   socket.on("pi room chat message", function(msg) {
     console.log("pi room chat message sent");
     let text_response;
+    console.log(msg.charAt(1));
     if (isQuickCommand(msg)) {
       const quickCommandIndex = parseInt(msg.charAt(1)) - 1;
       const quickCommandArguments = getArgumentsFromMessage(msg);
@@ -64,8 +81,9 @@ io.on('connection', function(socket) {
     }
     // HELPER FUNCTIONS ##########
     function isQuickCommand(message) {
+      var length = QuickCommands.length
       // Quick commands need to have a "-" character and they need to exist in the QuickCommands array
-      return message.startsWith("-") && (QuickCommands[message.charAt(1)] != undefined);
+      return message.startsWith("-") && (QuickCommands[message.charAt(1)] - 1 != undefined);
     }
 
     function getArgumentsFromMessage(message) {
