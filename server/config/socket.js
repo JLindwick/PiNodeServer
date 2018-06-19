@@ -66,12 +66,11 @@ io.on('connection', function(socket) {
       const quickCommandArguments = getArgumentsFromMessage(msg);
       const howManyArgs = quickCommandArguments.length;
 
-      var ctext = "customTextArg";
-      if (quickCommandArguments.length > 0) {
-          if(quickCommandArguments.length <= Object.keys(QuickCommands).length)
+      console.log(Object.keys(QuickCommands[quickCommandIndex]).length);
+      if (howManyArgs > 0) {
+          if(howManyArgs < Object.keys(QuickCommands[quickCommandIndex]).length)
           {
           text_response = Object.values((QuickCommands)[quickCommandIndex])[howManyArgs];
-          console.log(text_response);
           } else {
         text_response = QuickCommands[quickCommandIndex].defaultText;
       }
@@ -105,12 +104,13 @@ io.on('connection', function(socket) {
       // creates an array of strings from the original with the space character being the separator.catch
       // "-1 Elliot" would become ["-1", "Elliot"]
       const messageParts = message.split(" ");
+      console.log(messageParts);
       if (messageParts.length < 2) {
         // if the message doesn't have at least 2 parts there aren't any arguments available
         return false;
       } else {
         // returns all strings in the message parts except for the first one
-        return messageParts.slice(1);
+        return messageParts.slice(1,(messageParts.length));
       }
     }
     // END OF HELPER FUNCTIONS ######################
