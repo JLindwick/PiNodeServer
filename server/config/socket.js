@@ -47,6 +47,9 @@ io.on('connection', function(socket) {
   });
 
   socket.on("pi room chat message", function(msg) {
+    const quickCommandIndex = parseInt(msg.charAt(1)) - 1;
+    const quickCommandArguments = getArgumentsFromMessage(msg);
+    const howManyArgs = quickCommandArguments.length;
     console.log("pi room chat message sent");
     var text_response = "";
     if(isHelp(msg)) {
@@ -56,38 +59,39 @@ io.on('connection', function(socket) {
       for (var i = 0;i<QuickCommands.length;i++)
       {
         io.to("pi-client").emit("pi room chat message", "Default Text: " + QuickCommands[i].defaultText);
-        io.to("pi-client").emit("pi room chat message", "Custom Text: " + QuickCommands[i].customText);
+        console.log();
+        for (var j = 1;j<Object.keys(QuickCommands[i]).length;j++)
+        {
+          var myArg = Object.values((QuickCommands)[i])[j];
+          io.to("pi-client").emit("pi room chat message", "Custom Text: " + myArg);
+        }
         io.to("pi-client").emit("pi room chat message", "----------------------------------------------------------------------------------");
 
       }
     } else {
-    if (isQuickCommand(msg)) {
-      const quickCommandIndex = parseInt(msg.charAt(1)) - 1;
-      const quickCommandArguments = getArgumentsFromMessage(msg);
-      const howManyArgs = quickCommandArguments.length;
-
-      console.log(Object.keys(QuickCommands[quickCommandIndex]).length);
-      if (howManyArgs > 0) {
+      if (isQuickCommand(msg)) {
+        console.log(Object.keys(QuickCommands[quickCommandIndex]).length);
+        if (howManyArgs > 0) {
           if(howManyArgs < Object.keys(QuickCommands[quickCommandIndex]).length)
           {
-          text_response = Object.values((QuickCommands)[quickCommandIndex])[howManyArgs];
+            text_response = Object.values((QuickCommands)[quickCommandIndex])[howManyArgs];
           } else {
-        text_response = QuickCommands[quickCommandIndex].defaultText;
-      }
-        console.log(text_response);
-        for (var i = 1; i <= howManyArgs; i++) {
-          const regex = new RegExp(`${i}`, "g");
-          text_response = text_response.replace(regex, quickCommandArguments[i - 1]);
-        }
-      } else {
+            text_response = QuickCommands[quickCommandIndex].defaultText;
+          }
+          console.log(text_response);
+          for (var i = 1; i <= howManyArgs; i++) {
+            const regex = new RegExp(`${i}`, "g");
+            text_response = text_response.replace(regex, quickCommandArguments[i - 1]);
+          }
+        } else {
           text_response = QuickCommands[quickCommandIndex].defaultText;
+        }
+        io.to("pi-client").emit("pi room chat message", text_response)
+        io.to("pi-client").emit("robot speak command", text_response)
+      } else {
+        io.to("pi-client").emit("pi room chat message", msg)
+        io.to("pi-client").emit("robot speak command", msg)
       }
-      io.to("pi-client").emit("pi room chat message", text_response)
-      io.to("pi-client").emit("robot speak command", text_response)
-    } else {
-      io.to("pi-client").emit("pi room chat message", msg)
-      io.to("pi-client").emit("robot speak command", msg)
-    }
     }
 
     // HELPER FUNCTIONS ##########
@@ -123,26 +127,26 @@ io.on('connection', function(socket) {
         var shouldGivePredefinedInput = false;
         for (var i = 0; i < savedInputs.length; i++) {
           if (msg.data == "-" + (
-          i + 1)) {
-            shouldGivePredefinedInput = true;
+            i + 1)) {
+              shouldGivePredefinedInput = true;
+            }
           }
-        }
-        if (shouldGivePredefinedInput) {
-          const contentToSend = parseInt(msg.data.split("")[1]) - 1;
-          console.log(contentToSend)
-          io.to("pi-client").emit('chat message', savedInputs[contentToSend]);
+          if (shouldGivePredefinedInput) {
+            const contentToSend = parseInt(msg.data.split("")[1]) - 1;
+            console.log(contentToSend)
+            io.to("pi-client").emit('chat message', savedInputs[contentToSend]);
+          } else {
+            io.to("pi-client").emit('chat message', msg.data);
+          }
         } else {
-          io.to("pi-client").emit('chat message', msg.data);
+          io.to(msg.room).emit(msg.type, msg.data)
         }
-      } else {
-        io.to(msg.room).emit(msg.type, msg.data)
       }
-    }
+    });
+
+    socket.on('drawing', (data) => socket.broadcast.emit('drawing', data));
+    socket.on('changeBrushSize', (data) => socket.broadcast.emit('changeBrushSize', data));
+    socket.on('clear whiteboard', (data) => socket.broadcast.emit('clear whiteboard', data));
   });
 
-  socket.on('drawing', (data) => socket.broadcast.emit('drawing', data));
-  socket.on('changeBrushSize', (data) => socket.broadcast.emit('changeBrushSize', data));
-  socket.on('clear whiteboard', (data) => socket.broadcast.emit('clear whiteboard', data));
-});
-
-module.exports = io;
+  module.exports = io;
